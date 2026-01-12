@@ -6,7 +6,6 @@
   <title>Giornalino Immobili (PDF gratuito)</title>
 
   <style>
-    /* PDF/Print */
     @page { size: A4; margin: 12mm; }
     @media print {
       .toolbar { display: none !important; }
@@ -52,7 +51,7 @@
       border-bottom: 1px solid #ddd;
     }
 
-    /* PIÙ IMMOBILI PER PAGINA: cambia 3 -> 4 se vuoi ancora più compatto */
+    /* PIÙ IMMOBILI PER PAGINA: cambia 3 -> 4 se vuoi */
     .grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -81,6 +80,14 @@
     .facts span { border: 1px solid #eee; padding: 2px 6px; border-radius: 999px; }
     .link { font-size: 11px; margin-top: 8px; }
     .link a { border-bottom: 1px dotted #999; color: inherit; text-decoration: none; }
+
+    .empty {
+      border: 1px dashed #ddd;
+      border-radius: 12px;
+      padding: 14px;
+      opacity: .8;
+      font-size: 13px;
+    }
   </style>
 </head>
 
@@ -88,7 +95,7 @@
   <div class="toolbar">
     <div class="left">
       <strong>Giornalino Immobili</strong>
-      <span class="badge" id="info">—</span>
+      <span class="badge" id="info">caricamento…</span>
     </div>
     <button class="btn" onclick="window.print()">Scarica PDF</button>
   </div>
@@ -114,15 +121,7 @@
   </div>
 
   <script>
-    /**
-     * ✅ QUI METTI I TUOI IMMOBILI.
-     * Ordinamento attuale:
-     * 1) Vendesi prima
-     * 2) Affittasi dopo
-     * 3) prezzo crescente (priceValue)
-     *
-     * Se vuoi prezzo decrescente: cambia "a.priceValue - b.priceValue" in "b.priceValue - a.priceValue"
-     */
+    // ESEMPIO DATI (se qui dentro è vuoto, non vedrai niente)
     const items = [
       {
         type: "Vendesi",
@@ -132,8 +131,8 @@
         area: "65 mq",
         rooms: "2 locali",
         location: "Torino",
-        image: "https://via.placeholder.com/800x600",
-        url: "https://lasacraimmobiliare.it/products/..."
+        image: "https://picsum.photos/800/600?random=11",
+        url: "https://lasacraimmobiliare.it"
       },
       {
         type: "Affittasi",
@@ -143,8 +142,8 @@
         area: "35 mq",
         rooms: "1 locale",
         location: "Torino",
-        image: "https://via.placeholder.com/800x600",
-        url: "https://lasacraimmobiliare.it/products/..."
+        image: "https://picsum.photos/800/600?random=12",
+        url: "https://lasacraimmobiliare.it"
       },
       {
         type: "Vendesi",
@@ -154,16 +153,10 @@
         area: "90 mq",
         rooms: "3 locali",
         location: "Torino",
-        image: "https://via.placeholder.com/800x600",
-        url: "https://lasacraimmobiliare.it/products/..."
+        image: "https://picsum.photos/800/600?random=13",
+        url: "https://lasacraimmobiliare.it"
       }
     ];
-
-    // Ordinamento: Vendesi -> Affittasi, poi prezzo crescente
-    items.sort((a, b) => {
-      if (a.type !== b.type) return a.type === "Vendesi" ? -1 : 1;
-      return (a.priceValue ?? 0) - (b.priceValue ?? 0);
-    });
 
     function esc(s) {
       return String(s ?? "")
@@ -193,12 +186,34 @@
       `;
     }
 
-    const grid = document.getElementById("catalogo");
-    grid.innerHTML = items.map(cardHTML).join("");
+    function renderCatalog() {
+      const grid = document.getElementById("catalogo");
+      const info = document.getElementById("info");
 
-    // info in alto
-    const info = document.getElementById("info");
-    info.textContent = `${items.length} immobili • ordine: Vendesi → Affittasi, prezzo crescente`;
+      if (!grid) {
+        console.error("Elemento #catalogo non trovato.");
+        if (info) info.textContent = "errore: #catalogo non trovato";
+        return;
+      }
+
+      // Ordinamento: Vendesi -> Affittasi, poi prezzo crescente
+      items.sort((a, b) => {
+        if ((a.type || "") !== (b.type || "")) return a.type === "Vendesi" ? -1 : 1;
+        return (a.priceValue ?? 0) - (b.priceValue ?? 0);
+      });
+
+      if (!items.length) {
+        grid.innerHTML = `<div class="empty">Nessun immobile da mostrare: la lista <code>items</code> è vuota.</div>`;
+        if (info) info.textContent = "0 immobili";
+        return;
+      }
+
+      grid.innerHTML = items.map(cardHTML).join("");
+      if (info) info.textContent = `${items.length} immobili • ordine: Vendesi → Affittasi, prezzo crescente`;
+    }
+
+    // Render SOLO dopo che il DOM è pronto (risolve tanti “non si vede nulla”)
+    document.addEventListener("DOMContentLoaded", renderCatalog);
   </script>
 </body>
 </html>
